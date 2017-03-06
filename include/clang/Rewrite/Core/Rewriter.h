@@ -152,6 +152,12 @@ public:
     : SourceMgr(&SM), LangOpts(&LO) {}
   explicit Rewriter() : SourceMgr(nullptr), LangOpts(nullptr) {}
 
+  void undoChanges() {
+
+      // We clear the map of rewritebuffers.
+      RewriteBuffers.clear();
+  }
+
   void setSourceMgr(SourceManager &SM, const LangOptions &LO) {
     SourceMgr = &SM;
     LangOpts = &LO;
