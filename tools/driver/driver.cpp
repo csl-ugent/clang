@@ -231,7 +231,7 @@ static const DriverSuffix *FindDriverSuffix(StringRef ProgName) {
 }
 
 static void ParseProgName(SmallVectorImpl<const char *> &ArgVector,
-                          std::set<std::string> &SavedStrings) {
+                          std::set<std::string> &SavedStrings, Driver& TheDriver) {
   // Try to infer frontend type and default target from the program name by
   // comparing it against DriverSuffixes in order.
 
@@ -279,6 +279,7 @@ static void ParseProgName(SmallVectorImpl<const char *> &ArgVector,
 
     // Infer target from the prefix.
     StringRef Prefix = ProgNameRef.slice(0, LastComponent);
+    TheDriver.Prefix = Prefix;
     std::string IgnoredError;
     if (llvm::TargetRegistry::lookupTarget(Prefix, IgnoredError)) {
       auto it = ArgVector.begin();
@@ -460,7 +461,7 @@ int main(int argc_, const char **argv_) {
   SetInstallDir(argv, TheDriver);
 
   llvm::InitializeAllTargets();
-  ParseProgName(argv, SavedStrings);
+  ParseProgName(argv, SavedStrings, TheDriver);
 
   SetBackdoorDriverOutputsFromEnvVars(TheDriver);
 

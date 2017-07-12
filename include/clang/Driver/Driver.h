@@ -76,6 +76,9 @@ public:
   /// command line.
   std::string Dir;
 
+  /// The prefix of the clang executable.
+  std::string Prefix;
+
   /// The original path to the clang executable.
   std::string ClangExecutable;
 

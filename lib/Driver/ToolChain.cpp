@@ -26,6 +26,13 @@ using namespace clang::driver;
 using namespace clang;
 using namespace llvm::opt;
 
+#define CLANG_STRINGIFY(x) #x
+#define CLANG_TOSTRING(x) CLANG_STRINGIFY(x)
+#ifndef CLANG_GCC_VERSION
+#define CLANG_GCC_VERSION
+#endif
+#define CLANG_GCC_VERSION_STR CLANG_TOSTRING(CLANG_GCC_VERSION)
+
 ToolChain::ToolChain(const Driver &D, const llvm::Triple &T,
                      const ArgList &Args)
   : D(D), Triple(T), Args(Args) {
@@ -145,12 +152,77 @@ Tool *ToolChain::SelectTool(const JobAction &JA) const {
   return getTool(AC);
 }
 
+void ToolChain::AddIncludeSearchPathArgs(const ArgList &Args, ArgStringList &CmdArgs) const {
+  std::string GccVersion(CLANG_GCC_VERSION_STR);
+
+  // Checks
+  if (getDriver().Dir.empty() || GccVersion.empty()) {
+    return;
+  }
+
+  SmallString<128> P(getDriver().Dir);
+  llvm::sys::path::remove_filename(P); // Remove /bin from foo/bin
+  llvm::sys::path::append(P, "lib/gcc", getDriver().Prefix, GccVersion);
+  llvm::sys::path::append(P, "../../../..", getDriver().Prefix, "include");
+
+  CmdArgs.push_back(Args.MakeArgString("-I" + P.str()));
+}
+
+void ToolChain::AddCPlusPlusIncludeSearchPathArgs(const llvm::opt::ArgList &Args, ArgStringList &CmdArgs) const {
+  std::string GccVersion(CLANG_GCC_VERSION_STR);
+
+  // Checks
+  if (getDriver().Dir.empty() || GccVersion.empty()) {
+    return;
+  }
+
+  SmallString<128> P(getDriver().Dir);
+  llvm::sys::path::remove_filename(P); // Remove /bin from foo/bin
+  llvm::sys::path::append(P, "lib/gcc", getDriver().Prefix, GccVersion);
+  llvm::sys::path::append(P, "../../../..", getDriver().Prefix, "/include/c++/", GccVersion);
+
+  SmallString<128> PT(P);
+  SmallString<128> PB(P);
+
+  llvm::sys::path::append(PT, getDriver().Prefix);
+  llvm::sys::path::append(PB, "backward");
+  CmdArgs.push_back(Args.MakeArgString("-I" + P.str()));
+  CmdArgs.push_back(Args.MakeArgString("-I" + PT.str()));
+  CmdArgs.push_back(Args.MakeArgString("-I" + PB.str()));
+}
+
+void ToolChain::AddLinkSearchPathArgs(const llvm::opt::ArgList &Args, ArgStringList &CmdArgs) const {
+  std::string GccVersion(CLANG_GCC_VERSION_STR);
+
+  // Checks
+  if (getDriver().Dir.empty() || GccVersion.empty()) {
+    return;
+  }
+
+  SmallString<128> P(getDriver().Dir);
+  llvm::sys::path::remove_filename(P); // Remove /bin from foo/bin
+  llvm::sys::path::append(P, "lib/gcc", getDriver().Prefix, GccVersion);
+  llvm::sys::path::append(P, "../../../..", getDriver().Prefix, "lib");
+
+  CmdArgs.push_back(Args.MakeArgString("-L" + P.str()));
+}
+
 std::string ToolChain::GetFilePath(const char *Name) const {
   return D.GetFilePath(Name, *this);
 
 }
 
 std::string ToolChain::GetProgramPath(const char *Name) const {
+  if(getDriver().Prefix != "") {
+    // first try prefixed with Driver::Prefix
+    std::string targetName = getDriver().Prefix;
+    targetName += "-";
+    targetName += Name;
+    std::string targetProgram = D.GetProgramPath(targetName.c_str(), *this);
+    if(targetProgram != targetName) {
+      return targetProgram;
+    }
+  }
   return D.GetProgramPath(Name, *this);
 }
 

@@ -124,6 +124,13 @@ public:
     return Triple.getTriple();
   }
 
+  virtual void AddLinkSearchPathArgs(const llvm::opt::ArgList &Args,
+                                     llvm::opt::ArgStringList &CmdArgs) const;
+  virtual void AddIncludeSearchPathArgs(const llvm::opt::ArgList &Args,
+                                        llvm::opt::ArgStringList &CmdArgs) const;
+  virtual void AddCPlusPlusIncludeSearchPathArgs(const llvm::opt::ArgList &Args,
+                                                 llvm::opt::ArgStringList &CmdArgs) const;
+
   path_list &getFilePaths() { return FilePaths; }
   const path_list &getFilePaths() const { return FilePaths; }
 

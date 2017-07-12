@@ -3396,6 +3396,15 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // preprocessed inputs and configure concludes that -fPIC is not supported.
   Args.ClaimAllArgs(options::OPT_D);
 
+  if (isa<LinkJobAction>(JA)) {
+     getToolChain().AddLinkSearchPathArgs(Args, CmdArgs);
+  } else {
+     if (types::isCXX(InputType)) {
+       getToolChain().AddCPlusPlusIncludeSearchPathArgs(Args, CmdArgs);
+     }
+     getToolChain().AddIncludeSearchPathArgs(Args, CmdArgs);
+  }
+
   // Manually translate -O4 to -O3; let clang reject others.
   if (Arg *A = Args.getLastArg(options::OPT_O_Group)) {
     if (A->getOption().matches(options::OPT_O4)) {
@@ -5802,6 +5811,14 @@ void darwin::Link::AddLinkArgs(Compilation &C,
     CmdArgs.push_back("-syslibroot");
     CmdArgs.push_back(A->getValue());
   }
+
+  std::string libPath;
+  //libPath = D.Dir + "/../lib/gcc/" + D.Prefix + "/4.2.1";
+  //if (!llvm::sys::fs::exists(libPath, Exists) && Exists)
+  //  CmdArgs.push_back(Args.MakeArgString("-L" + libPath));
+  libPath = D.SysRoot + "/usr/lib/gcc/" + D.Prefix + "/4.2.1";
+  if (llvm::sys::fs::exists(libPath))
+    CmdArgs.push_back(Args.MakeArgString("-L" + libPath));
 
   Args.AddLastArg(CmdArgs, options::OPT_twolevel__namespace);
   Args.AddLastArg(CmdArgs, options::OPT_twolevel__namespace__hints);

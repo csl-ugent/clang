@@ -314,14 +314,8 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
       break;
     case llvm::Triple::GNU:
       // mingw-w64 crt include paths
-      // <sysroot>/i686-w64-mingw32/include
       SmallString<128> P = StringRef(HSOpts.ResourceDir);
-      llvm::sys::path::append(P, "../../../i686-w64-mingw32/include");
-      AddPath(P.str(), System, false);
-
-      // <sysroot>/x86_64-w64-mingw32/include
-      P.resize(HSOpts.ResourceDir.size());
-      llvm::sys::path::append(P, "../../../x86_64-w64-mingw32/include");
+      llvm::sys::path::append(P, "../../../" + triple.getTriple() + "include"); // <sysroot>/i686-w64-mingw32/include
       AddPath(P.str(), System, false);
 
       // mingw.org crt include paths

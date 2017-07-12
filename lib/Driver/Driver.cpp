@@ -44,6 +44,10 @@ using namespace clang::driver;
 using namespace clang;
 using namespace llvm::opt;
 
+static llvm::Triple computeTargetTriple(StringRef DefaultTargetTriple,
+                                        const ArgList &Args,
+                                        StringRef DarwinArchName);
+
 Driver::Driver(StringRef ClangExecutable,
                StringRef DefaultTargetTriple,
                DiagnosticsEngine &Diags)
@@ -356,6 +360,16 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
   }
   if (const Arg *A = Args->getLastArg(options::OPT__sysroot_EQ))
     SysRoot = A->getValue();
+  else if (const Arg *A = Args->getLastArg(options::OPT_isysroot)) {
+    SysRoot = A->getValue();
+  } else {
+      if (!Dir.empty()) {
+        SmallString<256> P = llvm::sys::path::parent_path(Dir);
+        llvm::sys::path::append(P,this->Prefix);
+        llvm::sys::path::append(P,"sysroot");
+        SysRoot = P.str();
+      }
+  }
   if (const Arg *A = Args->getLastArg(options::OPT__dyld_prefix_EQ))
     DyldPrefix = A->getValue();
   if (Args->hasArg(options::OPT_nostdlib))
