@@ -1,0 +1,3 @@
+[submodule "tools/extra/semantic-mod"]
+	path = tools/extra/semantic-mod
+	url = https://github.com/csl-ugent/semantic-mod.git
